@@ -1,4 +1,6 @@
 FROM node:24-alpine
+# Links the package on GHCR to this repo.
+LABEL org.opencontainers.image.source=https://github.com/canclini/feedback
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -13,6 +15,7 @@ COPY src src
 # The database lives on a volume; on canclini-web-01 that is
 # /srv/data/feedback mounted here.
 ENV DATABASE_PATH=/data/feedback.db
+ENV SNAPSHOT_PATH=/data/snapshot.db
 RUN mkdir /data && chown node:node /data
 VOLUME /data
 

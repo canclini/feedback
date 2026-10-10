@@ -2,6 +2,7 @@
 // plan). Runs inside the container: node src/cli.ts <command>
 import { pathToFileURL } from "node:url";
 import { openStore } from "./config.ts";
+import { writeSnapshot } from "./snapshot.ts";
 import { type Store, StoreError } from "./store.ts";
 
 const USAGE = `usage: node src/cli.ts <command>
@@ -12,11 +13,17 @@ const USAGE = `usage: node src/cli.ts <command>
   site-key revoke <id>
   agent-token create <name> [read|write]   default scope: write
   agent-token list
-  agent-token revoke <id>`;
+  agent-token revoke <id>
+  backup <file>                     write a consistent snapshot of the database`;
 
-export function run(store: Store, args: string[], out: (line: string) => void): number {
+export async function run(store: Store, args: string[], out: (line: string) => void): Promise<number> {
   const [group, command, ...rest] = args;
   try {
+    if (group === "backup" && command !== undefined && rest.length === 0) {
+      await writeSnapshot(store.db, command);
+      out(`snapshot written to ${command}`);
+      return 0;
+    }
     if (group === "apps" && command === undefined) {
       for (const app of store.listApps()) out(`${app.id}\t${app.repo}@${app.branch}\t${app.origins.join(" ")}`);
       return 0;
@@ -66,5 +73,5 @@ export function run(store: Store, args: string[], out: (line: string) => void): 
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.exitCode = run(openStore(), process.argv.slice(2), (line) => console.log(line));
+  process.exitCode = await run(openStore(), process.argv.slice(2), (line) => console.log(line));
 }
