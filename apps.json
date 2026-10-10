@@ -1,0 +1,36 @@
+{
+  "apps": [
+    {
+      "id": "canclini-web",
+      "name": "canclini.dev",
+      "origins": ["https://www.canclini.dev", "https://canclini.dev"],
+      "repo": "canclini/canclini.dev",
+      "branch": "main",
+      "local_path": "~/Projects/canclini.dev/canclini.web"
+    },
+    {
+      "id": "akkordo",
+      "name": "Akkordo",
+      "origins": ["https://www.akkordo.ch"],
+      "repo": "canclini/akkordo",
+      "branch": "master",
+      "local_path": "~/Projects/akkordo"
+    },
+    {
+      "id": "zahlenfuchs-web",
+      "name": "Zahlenfuchs",
+      "origins": ["https://www.zahlenfuchs.ch", "https://zahlenfuchs.ch"],
+      "repo": "canclini/zahlenfuchs-website",
+      "branch": "main",
+      "local_path": "~/Projects/zahlenfuchs/zahlenfuchs.web"
+    },
+    {
+      "id": "zahlenfuchs-app",
+      "name": "Zahlenfuchs App",
+      "origins": ["https://app.zahlenfuchs.ch"],
+      "repo": "canclini/Zahlenfuchs",
+      "branch": "main",
+      "local_path": "~/Projects/zahlenfuchs/zahlenfuchs.app"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 Point-and-comment feedback for Marcel's websites, worked through by agents. A small service at
 feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site.
 
-Status: step 1 of `docs/PLAN.md` (skeleton). Decisions taken are in `docs/DECISIONS.md`;
+Status: step 2 of `docs/PLAN.md` (store and HTTP API). Decisions taken are in `docs/DECISIONS.md`;
 `CONTRIBUTING.md` has the checks and the commit rules, which CI enforces.
 
 Global conventions (language, commits, PRs, reviews, co-authoring) come from
@@ -25,11 +25,19 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
 
 - Node 24. TypeScript runs directly (`node src/main.ts`), no build step; only erasable syntax.
 - `npm run check`: `tsc` type check and `node --test` over `test/**/*.test.ts`.
-- `npm start`: the service on `PORT` (default 8080); `GIT_COMMIT` sets what `/health` reports.
+- `npm start`: the service on `PORT` (default 8080). `DATABASE_PATH` (default `feedback.db`),
+  `APPS_PATH` (default `apps.json`), `GIT_COMMIT` (what `/health` reports).
+- `node src/cli.ts`: apps, site keys and agent tokens on the database in `DATABASE_PATH`.
+  A created secret is printed once; never paste one into a file, commit or chat.
 - `node bin/check-commits.ts origin/main..HEAD`: commit messages against `CONTRIBUTING.md`.
 
 ## Layout
 
-- `src/`: the service. `src/server.ts` builds the HTTP server, `src/main.ts` starts it.
-- `test/`: `*.test.ts`, one file per area.
+- `src/`: the service. `store.ts` holds all rules (status machine, scoping, validation) and is
+  shared by the HTTP API (`api.ts`), the CLI (`cli.ts`) and the MCP server (step 3). `db.ts`
+  has the migrations: append, never edit a shipped one. `server.ts` routes, `main.ts` starts.
+- `apps.json`: the app registry (id, origins, repo, branch, local path), loaded on start.
+- `test/`: `*.test.ts`, one file per area. `test/helpers.ts` gives each test a store on a
+  temporary database and a server on a free port; call them at the top level of a test file or
+  inside a test, not in a `before` hook.
 - `bin/`: repo tooling, not shipped in the image.
