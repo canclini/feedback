@@ -169,6 +169,13 @@ export class Store {
     return new Set(this.listApps().flatMap((app) => app.origins));
   }
 
+  // Number of entries per app and status, for the overview.
+  countEntries(): { app_id: string; status: Status; count: number }[] {
+    return this.db
+      .prepare("SELECT app_id, status, COUNT(*) AS count FROM entries GROUP BY app_id, status")
+      .all() as never;
+  }
+
   createEntry(principal: Principal, input: NewEntry): Entry {
     requireWrite(principal);
     const appId = principal.type === "owner" && principal.appId ? principal.appId : input.app;

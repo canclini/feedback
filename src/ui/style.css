@@ -1,0 +1,137 @@
+/* The palette and type of canclini.dev ("Vertrauens-Klassik"), with system
+   fonts so the service loads nothing from elsewhere. */
+:root {
+  --paper: #faf7f1;
+  --card: #fffdf8;
+  --ink: #26221c;
+  --ink-soft: #52493a;
+  --accent: #2f5d46;
+  --accent-soft: #e6ede4;
+  --line: #ddd5c6;
+  --warn: #8a5a00;
+  --warn-soft: #f6ead1;
+  --muted: #ece6da;
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "Source Sans 3", -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1c1a16;
+    --card: #24211c;
+    --ink: #ece6da;
+    --ink-soft: #b9b0a0;
+    --accent: #8fbf9f;
+    --accent-soft: #263a2e;
+    --line: #3a352c;
+    --warn: #e2b55a;
+    --warn-soft: #3a2f18;
+    --muted: #2e2a23;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 17px/1.5 var(--sans);
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+
+header nav { display: flex; gap: 1rem; align-items: center; }
+
+.brand { font: 600 1.2rem var(--serif); color: var(--ink); text-decoration: none; }
+
+main { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.25; }
+h1 { font-size: 1.8rem; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; }
+
+a { color: var(--accent); }
+
+.crumbs, .meta, small { color: var(--ink-soft); font-size: 0.9rem; }
+
+table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; }
+th, td { text-align: left; padding: 0.4rem 0.5rem 0.4rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 0.9rem; color: var(--ink-soft); }
+
+.entries, .events { list-style: none; padding: 0; margin: 0; }
+.entries li, .events li { padding: 0.6rem 0; border-bottom: 1px solid var(--line); }
+.entries small { display: block; }
+.events p { margin: 0.25rem 0 0; white-space: pre-wrap; }
+
+.status {
+  display: inline-block;
+  padding: 0 0.45rem;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: middle;
+  background: var(--muted);
+  color: var(--ink-soft);
+}
+.status-new { background: var(--accent-soft); color: var(--accent); }
+.status-question { background: var(--warn-soft); color: var(--warn); }
+
+blockquote {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border-left: 3px solid var(--accent);
+  white-space: pre-wrap;
+}
+
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+dt { color: var(--ink-soft); }
+dd { margin: 0; overflow-wrap: anywhere; }
+
+pre { overflow-x: auto; padding: 0.75rem; background: var(--card); border: 1px solid var(--line); }
+code { font-size: 0.9em; overflow-wrap: anywhere; }
+.secret { font-size: 1rem; user-select: all; }
+
+.tabs { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+.tabs a[aria-current] { font-weight: 600; color: var(--ink); text-decoration: none; }
+
+form.stack { display: grid; gap: 0.75rem; max-width: 30rem; }
+form.row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin: 0.5rem 0 1rem; }
+form.inline { display: inline; margin: 0; }
+label { display: grid; gap: 0.25rem; font-size: 0.9rem; color: var(--ink-soft); }
+
+input, select, textarea, button { font: inherit; color: inherit; }
+input, select, textarea {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 0;
+  min-width: 0;
+}
+textarea { width: 100%; }
+
+button {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--paper);
+  cursor: pointer;
+  justify-self: start;
+}
+button.quiet { background: none; color: var(--accent); border-color: transparent; padding: 0.2rem 0.4rem; }
+button:disabled { opacity: 0.5; cursor: default; }
+
+.error { color: #b3261e; margin: 0; min-height: 1.5em; }
+@media (prefers-color-scheme: dark) { .error { color: #f2b8b5; } }

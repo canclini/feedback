@@ -26,7 +26,7 @@ function rejects(work: () => unknown, code: string) {
 test("migrations run once and leave the schema version set", () => {
   const store = testStore();
   const { user_version } = store.db.prepare("PRAGMA user_version").get() as { user_version: number };
-  assert.equal(user_version, 1);
+  assert.equal(user_version, 2);
   const { journal_mode } = store.db.prepare("PRAGMA journal_mode").get() as { journal_mode: string };
   assert.equal(journal_mode, "wal");
 });
