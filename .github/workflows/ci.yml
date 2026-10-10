@@ -25,6 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+        env:
+          # The runner image's Chrome; its chromium is a snap that starts slowly.
+          CHROME_PATH: /usr/bin/google-chrome
       # A broken Dockerfile fails here rather than on the VM mid-deploy.
       - run: docker build -t feedback .
 
