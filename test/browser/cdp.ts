@@ -85,19 +85,28 @@ export class Browser {
       ...(process.env.CI ? ["--no-sandbox"] : []),
       "about:blank",
     ];
-    const child = spawn(chrome, args, { stdio: "ignore" });
+    const child = spawn(chrome, args, { stdio: ["ignore", "ignore", "pipe"] });
+    let stderr = "";
+    child.stderr!.on("data", (chunk: Buffer) => {
+      stderr = (stderr + chunk.toString()).slice(-2000);
+    });
     // A test that times out never reaches close(); the browser must not
     // outlive the test process either way.
     process.once("exit", () => child.kill("SIGKILL"));
+    // A cold start on a CI runner, with two browsers starting in parallel,
+    // has taken more than ten seconds.
     let port = "";
-    for (let i = 0; i < 100 && !port; i++) {
+    for (let i = 0; i < 300 && !port; i++) {
       try {
         port = readFileSync(join(profile, "DevToolsActivePort"), "utf8").split("\n")[0];
       } catch {
         await sleep(100);
       }
     }
-    if (!port) throw new Error(`${chrome} did not start`);
+    if (!port) {
+      child.kill("SIGKILL");
+      throw new Error(`${chrome} did not start within 30 s; its output:\n${stderr || "(none)"}`);
+    }
     const targets = (await (await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(5000) })).json()) as {
       type: string;
       webSocketDebuggerUrl: string;
