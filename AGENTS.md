@@ -3,7 +3,7 @@
 Point-and-comment feedback for Marcel's websites, worked through by agents. A small service at
 feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site (`docs/EMBED.md`).
 
-Status: steps 1 to 5 and 7 of `docs/PLAN.md` done, step 6 (deploy) in progress. Decisions taken are in `docs/DECISIONS.md`;
+Status: steps 1 to 8 of `docs/PLAN.md` done; live at feedback.canclini.dev. Next: step 9. Decisions taken are in `docs/DECISIONS.md`;
 `CONTRIBUTING.md` has the checks and the commit rules, which CI enforces.
 
 Global conventions (language, commits, PRs, reviews, co-authoring) come from
