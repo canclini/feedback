@@ -16,7 +16,7 @@ export function findChrome(): string | null {
   if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
   for (const name of CANDIDATES) {
     try {
-      return execFileSync("which", [name], { encoding: "utf8" }).trim();
+      return execFileSync("which", [name], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
     } catch {
       // not installed under this name
     }
@@ -72,7 +72,9 @@ export class Browser {
     });
   }
 
-  static async launch(chrome: string): Promise<Browser> {
+  // extraArgs go to Chrome as they are, e.g. --host-resolver-rules for a
+  // host whose DNS the machine has not caught up with.
+  static async launch(chrome: string, extraArgs: string[] = []): Promise<Browser> {
     const profile = mkdtempSync(join(tmpdir(), "feedback-chrome-"));
     const args = [
       "--headless=new",
@@ -83,6 +85,7 @@ export class Browser {
       "--window-size=1200,900",
       // CI runners on Ubuntu 24.04 block the sandbox's user namespaces.
       ...(process.env.CI ? ["--no-sandbox"] : []),
+      ...extraArgs,
       "about:blank",
     ];
     const child = spawn(chrome, args, { stdio: ["ignore", "ignore", "pipe"] });
