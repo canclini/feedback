@@ -76,6 +76,9 @@ The open decisions of `docs/PLAN.md`:
 |---|---|---|
 | `typescript` | dev | `tsc` as the type checker (`npm run typecheck`); emits nothing. |
 | `@types/node` | dev | Node's types for the type checker, pinned to the runtime's major (24). |
+| `@modelcontextprotocol/server` | runtime | The MCP server (v2 of the TypeScript SDK, spec 2026-07-28, with stateless serving of 2025-era clients). Depends only on `zod` and `@modelcontextprotocol/core`. |
+| `zod` | runtime | Input and output schemas of the MCP tools; the SDK takes zod schemas. |
+| `@modelcontextprotocol/client` | dev | The SDK's client, to test the MCP tools over real HTTP. |
 
 ## Commits on a public repo
 
@@ -83,3 +86,21 @@ The open decisions of `docs/PLAN.md`:
   history stays linear. Every commit of a PR therefore has to stand on its own.
 - `bin/check-commits.ts` checks every commit of a PR in CI against the rules in
   `CONTRIBUTING.md`; a violation fails the PR.
+
+## MCP (step 3)
+
+- **SDK v2 split packages, not `@modelcontextprotocol/sdk` v1** (the plan named v1). v1 pulls in
+  Express, Hono, ajv and a dozen more; `@modelcontextprotocol/server` needs only zod. Its
+  `createMcpHandler` speaks web-standard `Request`/`Response`; the dozen lines that adapt
+  `node:http` live in `src/mcp.ts`, so `@modelcontextprotocol/node` (which brings Hono) is not
+  needed.
+- **Stateless, one server instance per request**, built for the caller's token. 2025-era clients
+  are served statelessly too (`legacy: "stateless"`), so Claude Code connects whichever protocol
+  revision it speaks.
+- **Only agent tokens** are accepted on `/mcp`, by the same rules as the API (refused with an
+  `Origin` header). A read token sees only the reading tools, so a model is never offered a tool
+  it cannot use.
+- **Tool errors are tool results** (`isError: true` with the reason), not protocol errors, so the
+  model reads why a claim failed and can pick another entry.
+- **The working rules live in `src/loop.ts`** and are served twice: as the server's
+  `instructions` and as the prompt `work_through_feedback`.

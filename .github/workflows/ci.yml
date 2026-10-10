@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # A broken Dockerfile fails here rather than on the VM mid-deploy.
+      - run: docker build -t feedback .
 
   # Every commit of a pull request lands on main as written (rebase merge), so
   # each one is checked against CONTRIBUTING.md before it can be merged.
