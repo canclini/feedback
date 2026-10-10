@@ -15,6 +15,7 @@
   // A key handed over by "Aktivieren" arrives in the fragment; keep it and
   // take it out of the address bar.
   let key;
+  let handedOver = false;
   try {
     const parts = location.hash.slice(1).split("&");
     const handed = parts.find((part) => part.startsWith("feedback-key="));
@@ -24,7 +25,7 @@
       history.replaceState(history.state, "", location.pathname + location.search + (rest ? `#${rest}` : ""));
     }
     key = localStorage.getItem(KEY_NAME);
-    if (handed && key) setTimeout(() => toast("Feedback ist in diesem Browser aktiviert. Alt+K oder der Knopf unten rechts."), 300);
+    handedOver = Boolean(handed && key);
   } catch {
     return;
   }
@@ -460,5 +461,6 @@
     if (document.visibilityState === "visible") refresh();
   });
   setInterval(reposition, 2000);
+  if (handedOver) toast("Feedback ist in diesem Browser aktiviert. Alt+K oder der Knopf unten rechts.");
   refresh();
 })();

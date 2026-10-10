@@ -45,7 +45,7 @@ test("the owner gives feedback on an element and follows it on the page", { skip
   try {
     const key = store.createSiteKey("test-site", "chromium").key;
     await browser.navigate(`${siteOrigin}/#feedback-key=${key}`);
-    await browser.waitFor(shadow(".pill"), "the widget");
+    await browser.waitFor(`${shadow(".toast")}?.textContent.startsWith("Feedback ist in diesem Browser aktiviert")`, "the activation notice");
     assert.equal(await browser.evaluate("location.hash"), "");
     assert.equal(await browser.evaluate("localStorage.getItem('feedback-key')"), key);
 
