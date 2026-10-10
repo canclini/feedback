@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "id": "test-site",
+      "name": "Testseite",
+      "origins": ["http://localhost:8090"],
+      "repo": "canclini/feedback",
+      "branch": "main",
+      "local_path": "~/Projects/canclini.dev/feedback/dev/test-site"
+    }
+  ]
+}
