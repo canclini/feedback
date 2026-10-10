@@ -1,9 +1,10 @@
 # feedback
 
 Point-and-comment feedback for Marcel's websites, worked through by agents. A small service at
-feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and one script tag per site.
+feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site.
 
-Status: planned, nothing built. Start with `docs/PLAN.md`; its "Open decisions" come first.
+Status: step 1 of `docs/PLAN.md` (skeleton). Decisions taken are in `docs/DECISIONS.md`;
+`CONTRIBUTING.md` has the checks and the commit rules, which CI enforces.
 
 Global conventions (language, commits, PRs, reviews, co-authoring) come from
 `~/.claude/CLAUDE.md` and are not repeated here.
@@ -22,4 +23,13 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
 
 ## Build, test
 
-To be filled in with step 1 of the plan.
+- Node 24. TypeScript runs directly (`node src/main.ts`), no build step; only erasable syntax.
+- `npm run check`: `tsc` type check and `node --test` over `test/**/*.test.ts`.
+- `npm start`: the service on `PORT` (default 8080); `GIT_COMMIT` sets what `/health` reports.
+- `node bin/check-commits.ts origin/main..HEAD`: commit messages against `CONTRIBUTING.md`.
+
+## Layout
+
+- `src/`: the service. `src/server.ts` builds the HTTP server, `src/main.ts` starts it.
+- `test/`: `*.test.ts`, one file per area.
+- `bin/`: repo tooling, not shipped in the image.
