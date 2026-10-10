@@ -28,6 +28,47 @@ The open decisions of `docs/PLAN.md`:
   (`erasableSyntaxOnly`): no enums, no namespaces, no parameter properties.
 - **Tests with `node:test`**, no test framework dependency.
 - **`node:http`**, no HTTP framework until one earns its place.
+- **`node:sqlite` instead of `better-sqlite3`** (the plan named the latter). Node 24 ships
+  SQLite without a flag or warning, so there is no native module to build in the image and no
+  dependency to update. The API is synchronous like `better-sqlite3`'s.
+
+## Store and API (step 2)
+
+- **Status values are English identifiers:** `new`, `in_progress`, `question`, `done`,
+  `dismissed`. The German labels of the plan (*neu*, *in Arbeit*, *Rückfrage*, *erledigt*,
+  *verworfen*) are for the widget and the web UI only.
+- **Every change is an event**, posted as `{kind, body?, link?}`. The kind decides the new
+  status and who may post it (`TRANSITIONS` in `src/store.ts`):
+
+  | Kind | From | To | Who | Body |
+  |---|---|---|---|---|
+  | `claim` | new | in_progress | agent | optional |
+  | `question` | new, in_progress | question | agent | required |
+  | `answer` | question | new | owner | required |
+  | `resolve` | new, in_progress | done | agent | required |
+  | `dismiss` | new, in_progress, question | dismissed | agent, owner | required |
+  | `reopen` | done, dismissed | new | owner | optional |
+  | `note` | any | unchanged | agent, owner | required |
+
+  An answer returns the entry to `new`, so it shows up for agents again with the question and
+  the answer in its events. A second claim is a conflict (409), so two agents never work on the
+  same entry.
+- **The owner on a page is Marcel through a site key.** The page cannot use a session cookie of
+  feedback.canclini.dev (third party), so answering a question and reopening go through the site
+  key, which is limited to its app. An entry of another app answers 404, not 403.
+- **Secrets** are 32 random bytes in base64url with a kind prefix: `fbs_` for site keys, `fba_`
+  for agent tokens. Stored as SHA-256 only; with that much entropy a slow hash buys nothing.
+- **Agent tokens are refused when a request carries an `Origin` header.** They belong in an
+  agent's secret store, never in a page, so a leaked one cannot be used from a browser.
+- **Site keys are checked against the page origin** when the browser sends one, and the entry's
+  `url` must be a page of the app.
+- **The app registry is `apps.json` in this repo**, read and upserted on every start. Which repo
+  and branch an app deploys from is reviewed like code. An app removed from the file stays in
+  the database, because its entries still point at it.
+- **Context fields are cut, not refused** (`element_html` at 4 KB, the widget trims to 2 KB):
+  a long element must not lose the comment that came with it. The comment itself is refused
+  above 4000 characters, a request body above 64 KB.
+- **Keys and tokens are managed with `src/cli.ts`** until the web UI takes over in step 4.
 
 ## Dependencies
 
