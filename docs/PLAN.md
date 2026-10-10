@@ -1,8 +1,9 @@
 # Feedback: implementation plan
 
 Drafted 2026-10-10 at the end of the session that built canclini-infra (www.canclini.dev,
-Umami, Designate DNS). Status: plan, nothing built. A new session starts here: read this file,
-then `AGENTS.md`, then settle the open decisions with Marcel before step 1.
+Umami, Designate DNS). Status: step 1 done; the open decisions are settled in
+`docs/DECISIONS.md`. A new session starts here: read this file, then `AGENTS.md`, then
+`docs/DECISIONS.md`, then continue with the next step.
 
 ## The idea
 
@@ -97,7 +98,8 @@ running on its own Swiss infrastructure. A Werkstatt card and a blog post can fo
 
 ### The embed
 
-One line per site:
+Decided: a loader inside each site instead of this tag (decision 3 in `docs/DECISIONS.md`); the
+loader adds the same tag only when a site key is in `localStorage`. The tag it adds:
 
 ```html
 <script defer src="https://feedback.canclini.dev/v1/feedback.js" data-app="akkordo"></script>
@@ -180,7 +182,7 @@ Each step ends verified; the verification is part of the step.
 9. **The full loop.** Marcel gives three real entries on three sites; an agent works them
    through MCP end to end; the statuses show on the pages.
 
-## Open decisions (ask Marcel, then record in docs/DECISIONS.md)
+## Open decisions (settled 2026-10-10, see docs/DECISIONS.md)
 
 1. **Public or private repo, and how the image reaches the VM.** Public repo with a public image
    on GHCR is simplest (the VM pulls without credentials) and fits "a cool service" others could
