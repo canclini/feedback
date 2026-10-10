@@ -14,6 +14,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
+    # A hung test must fail the run, not hold it for GitHub's six-hour default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -31,6 +33,7 @@ jobs:
   commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
         with:
