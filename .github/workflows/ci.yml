@@ -45,3 +45,71 @@ jobs:
         with:
           node-version: 24
       - run: node bin/check-commits.ts "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+  # Every green commit on main becomes ghcr.io/canclini/feedback:main (and
+  # :<sha>). The package is public, so the VM pulls it without credentials.
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.test.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build and push
+        run: |
+          image=ghcr.io/canclini/feedback
+          docker build --build-arg GIT_COMMIT=${{ github.sha }} -t "$image:main" -t "$image:${{ github.sha }}" .
+          docker push "$image:${{ github.sha }}"
+          docker push "$image:main"
+
+  # Rolls the image out on canclini-web-01 the way canclini-infra deploys:
+  # platform/deploy.sh there pulls what changed and restarts it. Then reads
+  # the result back from outside. Skipped until the deploy secrets are set
+  # (DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, as in canclini-infra).
+  deploy:
+    needs: publish
+    if: needs.publish.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - name: Check the deploy secrets
+        id: ready
+        run: |
+          if [ -n "$HOST" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::DEPLOY_HOST is not set; the image is published but not deployed"; fi
+      - name: Set up ssh
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy
+        if: steps.ready.outputs.ok == 'true'
+        run: ssh "deploy@$HOST" /srv/platform/deploy.sh
+      - name: Wait until feedback.canclini.dev serves this commit
+        if: steps.ready.outputs.ok == 'true'
+        run: |
+          # 7 characters, as src/main.ts cuts GIT_COMMIT.
+          want="$(echo "${{ github.sha }}" | cut -c1-7)"
+          deadline=$(( SECONDS + 300 ))
+          while :; do
+            got="$(curl -fsS --max-time 10 https://feedback.canclini.dev/health 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+            if [ "$got" = "$want" ]; then echo "feedback.canclini.dev serves $want"; break; fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::feedback.canclini.dev reports '${got:-nothing}', wanted $want"; exit 1
+            fi
+            sleep 10
+          done

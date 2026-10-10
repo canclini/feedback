@@ -157,3 +157,21 @@ The open decisions of `docs/PLAN.md`:
 - **Browser tests** (`test/browser/`) drive headless Chromium or Chrome over the DevTools
   protocol with Node's built-in WebSocket, no dependency. They skip when no browser is found
   and run in CI, where the runner image has Chrome.
+
+## Deploy (step 6)
+
+- **The image is published by this repo's CI** as `ghcr.io/canclini/feedback:main` (and
+  `:<sha>`) on every green commit to main. The package is public, so the VM pulls it without a
+  credential. canclini-infra's compose file names `:main`.
+- **This repo's CI also rolls it out**: it runs canclini-infra's `platform/deploy.sh` on the VM
+  as `deploy`, as canclini.web does for the website, then waits until
+  `https://feedback.canclini.dev/health` reports the commit. canclini-infra keeps describing the
+  service (compose, Caddy, DNS, backup); this repo only says when a new image is ready.
+- **Backups read a snapshot, never the live database.** The service writes
+  `SNAPSHOT_PATH` (`/data/snapshot.db` in the image) on start and every hour through SQLite's
+  backup API, to a temporary file renamed into place. The nightly backup in canclini-infra
+  copies that file with the data directory mounted read-only. Running `docker compose exec`
+  from the backup container instead would need the Docker socket, which is root on the VM.
+  `node src/cli.ts backup <file>` writes the same snapshot on demand.
+- **`/srv/data/feedback` belongs to uid 1000** (`node` in the image). canclini-infra's
+  `deploy.sh` creates it idempotently, because a change to cloud-init replaces the VM.

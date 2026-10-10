@@ -3,7 +3,7 @@
 Point-and-comment feedback for Marcel's websites, worked through by agents. A small service at
 feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site (`docs/EMBED.md`).
 
-Status: steps 1 to 5 and 7 of `docs/PLAN.md` done; next is step 6 (deploy). Decisions taken are in `docs/DECISIONS.md`;
+Status: steps 1 to 5 and 7 of `docs/PLAN.md` done, step 6 (deploy) in progress. Decisions taken are in `docs/DECISIONS.md`;
 `CONTRIBUTING.md` has the checks and the commit rules, which CI enforces.
 
 Global conventions (language, commits, PRs, reviews, co-authoring) come from
@@ -31,6 +31,8 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
   `APPS_PATH` (default `apps.json`), `GIT_COMMIT` (what `/health` reports), `PUBLIC_URL`
   (default `http://localhost:8080`; the passkeys' relying party, never change it in production).
   While no passkey exists, the log prints a one-time setup code on every start.
+- `SNAPSHOT_PATH`: when set, the service writes a consistent snapshot there on start and every
+  hour, for the nightly backup. `node src/cli.ts backup <file>` writes one on demand.
 - `node src/cli.ts`: apps, site keys and agent tokens on the database in `DATABASE_PATH`.
   A created secret is printed once; never paste one into a file, commit or chat.
 - `node bin/check-commits.ts origin/main..HEAD`: commit messages against `CONTRIBUTING.md`.
@@ -41,6 +43,15 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
   token into the session scratchpad (`{"mcpServers":{"feedback":{"type":"http","url":
   "http://127.0.0.1:18080/mcp","headers":{"Authorization":"Bearer <token>"}}}}`) and run
   `claude -p "..." --mcp-config <file> --strict-mcp-config`. Delete the file afterwards.
+
+## Deploy
+
+- CI publishes `ghcr.io/canclini/feedback:main` on every green push to main, then runs
+  canclini-infra's `/srv/platform/deploy.sh` on canclini-web-01 and waits for `/health` to
+  report the commit. The service itself (compose, Caddy, DNS, backup) is described in
+  canclini-infra, not here.
+- On the VM: `cd /srv/platform && docker compose --env-file /srv/data/secrets/umami.env logs
+  feedback` (setup code while no passkey exists), `... exec feedback node src/cli.ts <command>`.
 
 ## Layout
 
