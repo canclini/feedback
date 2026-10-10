@@ -3,7 +3,7 @@
     {
       "id": "canclini-web",
       "name": "canclini.dev",
-      "origins": ["https://www.canclini.dev", "https://canclini.dev"],
+      "origins": ["https://www.canclini.dev"],
       "repo": "canclini/canclini.dev",
       "branch": "main",
       "local_path": "~/Projects/canclini.dev/canclini.web"
@@ -19,7 +19,7 @@
     {
       "id": "zahlenfuchs-web",
       "name": "Zahlenfuchs",
-      "origins": ["https://www.zahlenfuchs.ch", "https://zahlenfuchs.ch"],
+      "origins": ["https://www.zahlenfuchs.ch"],
       "repo": "canclini/zahlenfuchs-website",
       "branch": "main",
       "local_path": "~/Projects/zahlenfuchs/zahlenfuchs.web"
