@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after } from "node:test";
+import { Auth } from "../src/auth.ts";
 import { openDatabase } from "../src/db.ts";
 import { createServer } from "../src/server.ts";
 import { Store } from "../src/store.ts";
@@ -42,8 +43,10 @@ export function testStore(): Store {
   return store;
 }
 
-export async function testServer(store: Store): Promise<string> {
-  const server = createServer({ commit: "abc1234", store });
+export const TEST_PUBLIC_URL = "http://localhost:8080";
+
+export async function testServer(store: Store, auth = new Auth(store.db, { publicUrl: TEST_PUBLIC_URL })): Promise<string> {
+  const server = createServer({ commit: "abc1234", store, auth });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   after(() => {
     server.close();

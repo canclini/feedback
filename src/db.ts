@@ -60,6 +60,23 @@ const MIGRATIONS: string[] = [
     revoked_at TEXT
   ) STRICT;
   `,
+  `
+  CREATE TABLE credentials (
+    id TEXT PRIMARY KEY,        -- WebAuthn credential id, base64url
+    public_key BLOB NOT NULL,
+    counter INTEGER NOT NULL,
+    transports TEXT,            -- JSON array, as the browser reported it
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    last_used_at TEXT
+  ) STRICT;
+
+  CREATE TABLE sessions (
+    hash TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  ) STRICT;
+  `,
 ];
 
 export function openDatabase(path: string): DatabaseSync {

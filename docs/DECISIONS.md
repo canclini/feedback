@@ -78,6 +78,7 @@ The open decisions of `docs/PLAN.md`:
 | `@types/node` | dev | Node's types for the type checker, pinned to the runtime's major (24). |
 | `@modelcontextprotocol/server` | runtime | The MCP server (v2 of the TypeScript SDK, spec 2026-07-28, with stateless serving of 2025-era clients). Depends only on `zod` and `@modelcontextprotocol/core`. |
 | `zod` | runtime | Input and output schemas of the MCP tools; the SDK takes zod schemas. |
+| `@simplewebauthn/server` | runtime | Passkey registration and sign-in: verifies attestations and assertions (CBOR, COSE, signatures), which is easy to get subtly wrong by hand. |
 | `@modelcontextprotocol/client` | dev | The SDK's client, to test the MCP tools over real HTTP. |
 
 ## Commits on a public repo
@@ -104,3 +105,31 @@ The open decisions of `docs/PLAN.md`:
   model reads why a claim failed and can pick another entry.
 - **The working rules live in `src/loop.ts`** and are served twice: as the server's
   `instructions` and as the prompt `work_through_feedback`.
+
+## Passkeys and web UI (step 4)
+
+- **No `@simplewebauthn/browser`** (the plan named it). Browsers since 2025 parse and serialise
+  WebAuthn options natively (`PublicKeyCredential.parseCreationOptionsFromJSON`,
+  `credential.toJSON()`), so the sign-in page needs a few lines of its own script and no
+  bundle served from `node_modules`.
+- **Server-rendered HTML with plain forms.** No framework, no client-side app. JavaScript only
+  for the passkey ceremonies. Every page is built with an escaping template tag (`src/html.ts`).
+- **First passkey with a setup code.** While no passkey exists, the service prints a fresh
+  one-time code to its log on every start. It is kept in memory only. Once a passkey is
+  registered, setup is closed; further passkeys are added from a signed-in session.
+- **Sessions in SQLite**, 30 days, as a `__Host-session` cookie (HttpOnly, Secure,
+  SameSite=Strict). Stored as a hash like the other secrets. Every state-changing request of the
+  UI must come with an `Origin` header equal to `PUBLIC_URL`.
+- **`Referrer-Policy: same-origin`, not `no-referrer`.** Under `no-referrer` Chrome sends
+  `Origin: null` with form posts, and the origin check refuses them. `same-origin` still sends
+  no referrer to the sites an entry links to.
+- **`PUBLIC_URL`** (default `http://localhost:8080`) sets the WebAuthn relying party: its
+  hostname is the RP ID, its origin the expected origin. Passkeys registered for one hostname do
+  not work on another, so it must be `https://feedback.canclini.dev` in production from the
+  first registration on.
+- **"Auf <App> aktivieren"** creates a site key and redirects to the app's first origin with
+  `#feedback-key=<key>`. The fragment never reaches a server; the widget (step 5) stores it and
+  removes it from the address bar. The CSP's `form-action` allows the registered origins for
+  this redirect.
+- **The web UI acts as the owner without an app**, so it sees and answers entries of every app
+  through the same store rules as a site key.
