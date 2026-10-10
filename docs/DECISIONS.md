@@ -133,3 +133,27 @@ The open decisions of `docs/PLAN.md`:
   this redirect.
 - **The web UI acts as the owner without an app**, so it sees and answers entries of every app
   through the same store rules as a site key.
+
+## Widget (step 5)
+
+- **The site key decides the app, not the script tag.** The loader needs no `data-app`: the
+  service knows the app from the key, so one loader text fits every site.
+- **Everything the widget draws lives in one shadow root**, styled with a constructed
+  stylesheet (`adoptedStyleSheets`). A page's `style-src` does not govern those, so a site's CSP
+  only needs `script-src` and `connect-src` for the service. Markers are overlays positioned
+  over the element; the page's own DOM and classes are never touched. No `innerHTML`: all nodes
+  are built with the DOM API, so page or entry text is never parsed as markup.
+- **The shadow root is open**, so the browser tests can reach into it. Closing it would not
+  protect anything from the page's own scripts.
+- **Polling every 20 seconds** while the tab is visible, plus on returning to the tab. No
+  server push: the service stays stateless per request, and a few seconds of delay do not
+  matter for this loop.
+- **Entries belong to a page by origin and path**, not the full URL, so query strings and
+  fragments do not hide an entry from its page.
+- **`GET /v1/entries` includes each entry's `last_event`**, so the widget shows the latest note
+  or question without a request per entry.
+- **Size: 18 KB, 6 KB gzipped**, served compressed by the service. More than "a few KB" in the
+  plan, because answering a question and reopening happen on the page itself.
+- **Browser tests** (`test/browser/`) drive headless Chromium or Chrome over the DevTools
+  protocol with Node's built-in WebSocket, no dependency. They skip when no browser is found
+  and run in CI, where the runner image has Chrome.

@@ -247,6 +247,19 @@ export class Store {
     return rows.map(toEntry);
   }
 
+  // The newest event of each entry, so a list can show the latest note or
+  // question without a request per entry.
+  lastEvents(ids: number[]): Map<number, Event> {
+    if (ids.length === 0) return new Map();
+    const rows = this.db
+      .prepare(`
+        SELECT entry_id, id, created_at, actor, kind, status, body, link FROM events
+        WHERE id IN (SELECT MAX(id) FROM events WHERE entry_id IN (${ids.map(() => "?").join(", ")}) GROUP BY entry_id)
+      `)
+      .all(...ids) as unknown as (Event & { entry_id: number })[];
+    return new Map(rows.map(({ entry_id, ...event }) => [entry_id, event]));
+  }
+
   getEntry(principal: Principal, id: number): { entry: Entry; events: Event[]; app: App } {
     const entry = this.visibleEntry(principal, id);
     const events = this.db

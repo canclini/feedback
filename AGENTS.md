@@ -1,9 +1,9 @@
 # feedback
 
 Point-and-comment feedback for Marcel's websites, worked through by agents. A small service at
-feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site.
+feedback.canclini.dev (Node, SQLite, passkeys, HTTP API and MCP) and a small loader per site (`docs/EMBED.md`).
 
-Status: steps 1 to 4 and 7 of `docs/PLAN.md` done; next is step 5 (the widget). Decisions taken are in `docs/DECISIONS.md`;
+Status: steps 1 to 5 and 7 of `docs/PLAN.md` done; next is step 6 (deploy). Decisions taken are in `docs/DECISIONS.md`;
 `CONTRIBUTING.md` has the checks and the commit rules, which CI enforces.
 
 Global conventions (language, commits, PRs, reviews, co-authoring) come from
@@ -24,7 +24,9 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
 ## Build, test
 
 - Node 24. TypeScript runs directly (`node src/main.ts`), no build step; only erasable syntax.
-- `npm run check`: `tsc` type check and `node --test` over `test/**/*.test.ts`.
+- `npm run check`: `tsc` type check and `node --test` over `test/**/*.test.ts`, including the
+  browser tests in `test/browser/` (headless Chromium or Chrome; `CHROME_PATH` to pick one,
+  skipped when none is found).
 - `npm start`: the service on `PORT` (default 8080). `DATABASE_PATH` (default `feedback.db`),
   `APPS_PATH` (default `apps.json`), `GIT_COMMIT` (what `/health` reports), `PUBLIC_URL`
   (default `http://localhost:8080`; the passkeys' relying party, never change it in production).
@@ -51,12 +53,17 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
 - `src/mcp.ts`: the MCP tools and the `/mcp` route. `src/loop.ts`: the working rules for agents,
   served as instructions and as a prompt. Changing a tool means changing its description, its
   test in `test/mcp.test.ts`, and `loop.ts` if the workflow changes.
+- `src/widget/feedback.js`: the widget, plain browser JavaScript, served at `/v1/feedback.js`.
+  Visible text German (de-CH). Build nodes with its `h()` helper, never `innerHTML`.
+- `dev/`: the strict-CSP test site (`dev/test-site.ts`, `dev/test-site/`, with the canonical
+  loader) and `dev/apps.json` registering it.
 - `apps.json`: the app registry (id, origins, repo, branch, local path), loaded on start.
 - `test/`: `*.test.ts`, one file per area. `test/helpers.ts` gives each test a store on a
   temporary database and a server on a free port; call them at the top level of a test file or
   inside a test, not in a `before` hook. `test/authenticator.ts` is a software passkey, so the
   WebAuthn tests verify real signatures.
-- Real browser check of the web UI: headless Chromium with a CDP virtual authenticator
-  (`WebAuthn.addVirtualAuthenticator`) drives setup, sign-in and the pages. The unit tests cannot
-  catch browser behaviour such as the `Origin: null` that `Referrer-Policy: no-referrer` causes.
+- `test/browser/cdp.ts` drives the browser over the DevTools protocol. `web-ui.test.ts` uses a
+  virtual authenticator for the passkey flow; `widget.test.ts` runs the widget on the strict-CSP
+  test site. They catch what HTTP tests cannot, such as the `Origin: null` that
+  `Referrer-Policy: no-referrer` causes, or a CSP violation.
 - `bin/`: repo tooling, not shipped in the image.

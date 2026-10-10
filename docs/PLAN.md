@@ -1,7 +1,7 @@
 # Feedback: implementation plan
 
 Drafted 2026-10-10 at the end of the session that built canclini-infra (www.canclini.dev,
-Umami, Designate DNS). Status: steps 1 to 4 done, and step 7 (backups, in canclini-infra); the open decisions are settled in
+Umami, Designate DNS). Status: steps 1 to 5 done, and step 7 (backups, in canclini-infra); the open decisions are settled in
 `docs/DECISIONS.md`. A new session starts here: read this file, then `AGENTS.md`, then
 `docs/DECISIONS.md`, then continue with the next step.
 

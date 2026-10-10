@@ -72,7 +72,8 @@ async function route(
       url: url.searchParams.get("url") ?? undefined,
       limit: parseLimit(url.searchParams.get("limit")),
     });
-    return [200, { entries }];
+    const last = store.lastEvents(entries.map((entry) => entry.id));
+    return [200, { entries: entries.map((entry) => ({ ...entry, last_event: last.get(entry.id) ?? null })) }];
   }
   const entryMatch = /^\/v1\/entries\/(\d+)(\/events)?$/.exec(path);
   if (entryMatch && !entryMatch[2] && method === "GET") {
