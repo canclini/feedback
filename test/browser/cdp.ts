@@ -7,7 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-const CANDIDATES = ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable"];
+// Chrome first: on Ubuntu, chromium is a snap wrapper that starts slowly.
+const CANDIDATES = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"];
 
 // CHROME_PATH wins; otherwise the first browser on PATH. Null when there is
 // none, so the browser tests can skip instead of fail on such a machine.
