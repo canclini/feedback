@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+docs
+test
+bin
+*.db
+*.db-wal
+*.db-shm
