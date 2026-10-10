@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node src/main.ts",
     "typecheck": "tsc",
-    "test": "node --test \"test/**/*.test.ts\"",
+    "test": "node --test --test-timeout=120000 --test-force-exit \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test"
   },
   "devDependencies": {

@@ -25,6 +25,14 @@ export function findChrome(): string | null {
 
 type Listener = (params: Record<string, unknown>) => void;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out: ${label}`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export class Browser {
   process: ChildProcess;
   profile: string;
@@ -77,6 +85,9 @@ export class Browser {
       "about:blank",
     ];
     const child = spawn(chrome, args, { stdio: "ignore" });
+    // A test that times out never reaches close(); the browser must not
+    // outlive the test process either way.
+    process.once("exit", () => child.kill("SIGKILL"));
     let port = "";
     for (let i = 0; i < 100 && !port; i++) {
       try {
@@ -86,15 +97,19 @@ export class Browser {
       }
     }
     if (!port) throw new Error(`${chrome} did not start`);
-    const targets = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()) as {
+    const targets = (await (await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(5000) })).json()) as {
       type: string;
       webSocketDebuggerUrl: string;
     }[];
     const socket = new WebSocket(targets.find((t) => t.type === "page")!.webSocketDebuggerUrl);
-    await new Promise((resolve, reject) => {
-      socket.addEventListener("open", resolve);
-      socket.addEventListener("error", reject);
-    });
+    await withTimeout(
+      new Promise((resolve, reject) => {
+        socket.addEventListener("open", resolve);
+        socket.addEventListener("error", reject);
+      }),
+      5000,
+      "the DevTools connection",
+    );
     const browser = new Browser(child, profile, socket);
     await Promise.all(["Page.enable", "Runtime.enable", "Log.enable", "Network.enable"].map((m) => browser.send(m)));
     return browser;
@@ -122,7 +137,7 @@ export class Browser {
       });
     });
     await this.send("Page.navigate", { url });
-    await loaded;
+    await withTimeout(loaded, 15000, `loading ${url}`);
   }
 
   async evaluate<T = unknown>(expression: string): Promise<T> {
@@ -162,10 +177,17 @@ export class Browser {
     await this.send("Input.insertText", { text });
   }
 
+  // Never waits for an exit that already happened (a crashed browser), and
+  // kills hard if the browser does not stop.
   async close(): Promise<void> {
     this.socket.close();
-    this.process.kill();
-    await new Promise((resolve) => this.process.once("exit", resolve));
+    const running = () => this.process.exitCode === null && this.process.signalCode === null;
+    if (running()) {
+      const exited = new Promise((resolve) => this.process.once("exit", resolve));
+      this.process.kill();
+      await Promise.race([exited, sleep(5000)]);
+      if (running()) this.process.kill("SIGKILL");
+    }
     // Chrome's helper processes may still write to the profile for a moment
     // after the main process exits; retry on ENOTEMPTY.
     rmSync(this.profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
