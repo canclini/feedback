@@ -13,6 +13,36 @@ async function post(path, body) {
   return data;
 }
 
+function base64url(value) {
+  if (typeof value === "string") return value.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const bytes = ArrayBuffer.isView(value)
+    ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
+    : new Uint8Array(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// The credential as JSON for the server. Built by hand rather than with
+// credential.toJSON(): password managers such as Dashlane answer with their
+// own credential objects, whose toJSON() can leave fields empty.
+function credentialJSON(credential) {
+  const { response } = credential;
+  const fields = {};
+  for (const key of ["clientDataJSON", "attestationObject", "authenticatorData", "signature", "userHandle"]) {
+    if (response[key]) fields[key] = base64url(response[key]);
+  }
+  if (typeof response.getTransports === "function") fields.transports = response.getTransports();
+  return {
+    id: base64url(credential.rawId),
+    rawId: base64url(credential.rawId),
+    type: credential.type,
+    authenticatorAttachment: credential.authenticatorAttachment ?? undefined,
+    clientExtensionResults: credential.getClientExtensionResults?.() ?? {},
+    response: fields,
+  };
+}
+
 async function register(form, setup) {
   const fields = new FormData(form);
   const start = setup
@@ -23,7 +53,7 @@ async function register(form, setup) {
   });
   await post("/auth/register/verify", {
     ceremony: start.ceremony,
-    response: credential.toJSON(),
+    response: credentialJSON(credential),
     name: fields.get("name"),
   });
 }
@@ -33,7 +63,7 @@ async function signIn() {
   const credential = await navigator.credentials.get({
     publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(start.options),
   });
-  await post("/auth/login/verify", { ceremony: start.ceremony, response: credential.toJSON() });
+  await post("/auth/login/verify", { ceremony: start.ceremony, response: credentialJSON(credential) });
 }
 
 for (const form of document.querySelectorAll("[data-passkey]")) {
