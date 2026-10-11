@@ -45,13 +45,14 @@ The open decisions of `docs/PLAN.md`:
   | `claim` | new | in_progress | agent | optional |
   | `question` | new, in_progress | question | agent | required |
   | `answer` | question | new | owner | required |
-  | `resolve` | new, in_progress | done | agent | required |
+  | `resolve` | new, in_progress, question | done | agent | required |
   | `dismiss` | new, in_progress, question | dismissed | agent, owner | required |
   | `reopen` | done, dismissed | new | owner | optional |
   | `note` | any | unchanged | agent, owner | required |
 
   An answer returns the entry to `new`, so it shows up for agents again with the question and
-  the answer in its events. A second claim is a conflict (409), so two agents never work on the
+  the answer in its events. An agent may also resolve an entry that waits on a question, for
+  when Marcel settled it with the agent outside the page (decided 2026-10-11); the note says how. A second claim is a conflict (409), so two agents never work on the
   same entry.
 - **The owner on a page is Marcel through a site key.** The page cannot use a session cookie of
   feedback.canclini.dev (third party), so answering a question and reopening go through the site

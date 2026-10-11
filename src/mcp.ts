@@ -107,7 +107,7 @@ export function buildMcpServer(store: Store, principal: AgentPrincipal, version:
   transition(
     "resolve_feedback",
     "Resolve a feedback entry",
-    "Mark an entry as done after the change is committed and pushed. Marcel reads the note on the page next to the element. Do not merge the branch: Marcel merges.",
+    "Mark an entry as done after the change is committed and pushed. Also works on an entry that waits on your question, when Marcel settled it with you outside the page; say so in the note. Marcel reads the note on the page next to the element. Do not merge the branch: Marcel merges.",
     "resolve",
     {
       note: z

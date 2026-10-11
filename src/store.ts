@@ -65,12 +65,13 @@ interface Transition {
 }
 
 // The status machine. An answer hands the entry back to the agents as new,
-// with the question and the answer in its events.
+// with the question and the answer in its events. An agent may resolve an open
+// question too: Marcel often settles it with the agent outside the page.
 export const TRANSITIONS = {
   claim: { from: ["new"], to: "in_progress", body: "optional", by: ["agent"] },
   question: { from: ["new", "in_progress"], to: "question", body: "required", by: ["agent"] },
   answer: { from: ["question"], to: "new", body: "required", by: ["owner"] },
-  resolve: { from: ["new", "in_progress"], to: "done", body: "required", by: ["agent"] },
+  resolve: { from: ["new", "in_progress", "question"], to: "done", body: "required", by: ["agent"] },
   dismiss: {
     from: ["new", "in_progress", "question"],
     to: "dismissed",

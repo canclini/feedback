@@ -81,6 +81,16 @@ test("an agent claims, asks, gets an answer and resolves", () => {
   assert.deepEqual(kinds, ["created", "claim", "question", "answer", "claim", "resolve"]);
 });
 
+test("an agent resolves a question Marcel settled outside the page", () => {
+  const store = testStore();
+  const { id } = newEntry(store);
+  store.addEvent(agent, id, { kind: "claim" });
+  store.addEvent(agent, id, { kind: "question", body: "Welcher Wortlaut?" });
+  const { entry } = store.addEvent(agent, id, { kind: "resolve", body: "Im Gespräch geklärt, Text ist live." });
+  assert.equal(entry.status, "done");
+  rejects(() => store.addEvent(shopOwner, id, { kind: "answer", body: "zu spät" }), "conflict");
+});
+
 test("transitions that do not fit the status are conflicts", () => {
   const store = testStore();
   const { id } = newEntry(store);
