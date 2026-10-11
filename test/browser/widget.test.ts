@@ -110,7 +110,9 @@ test("a revoked key removes the widget and the key from the browser", { skip, ti
     await browser.waitFor(shadow(".pill"), "the widget");
     store.revokeSiteKey(id);
     await browser.navigate(`${siteOrigin}/`);
-    await browser.waitFor(`${shadow(".toast")}?.textContent.includes("gilt nicht mehr")`, "the notice");
+    // The notice waits on a round trip to the service; a slow CI runner can take longer than the
+    // default five seconds for it, and the notice itself stays five seconds before it goes.
+    await browser.waitFor(`${shadow(".toast")}?.textContent.includes("gilt nicht mehr")`, "the notice", 15000);
     assert.equal(await browser.evaluate("localStorage.getItem('feedback-key')"), null);
   } finally {
     await browser.close();
