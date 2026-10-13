@@ -87,6 +87,8 @@ th { font-weight: 600; font-size: 0.9rem; color: var(--ink-soft); }
 }
 .status-new { background: var(--accent-soft); color: var(--accent); }
 .status-question { background: var(--warn-soft); color: var(--warn); }
+.status-here { background: var(--accent-soft); color: var(--accent); }
+caption { text-align: left; font-size: 0.9rem; color: var(--ink-soft); padding-bottom: 0.25rem; }
 
 blockquote {
   margin: 0 0 1rem;

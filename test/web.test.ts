@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { Auth } from "../src/auth.ts";
+import { deviceName } from "../src/web.ts";
 import { SoftAuthenticator } from "./authenticator.ts";
 import { TEST_PUBLIC_URL, testServer, testStore } from "./helpers.ts";
 
@@ -13,7 +14,8 @@ const setupCode = auth.issueSetupCode()!;
 const owner = store.authenticate(store.createSiteKey("shop", "test").key)!;
 
 class Browser {
-  cookie = "";
+  cookie = ""; // the session
+  others = new Map<string, string>();
   async request(method: string, path: string, body?: unknown, extra: Record<string, string> = {}) {
     const json = body !== undefined && !(body instanceof URLSearchParams);
     const res = await fetch(`${base}${path}`, {
@@ -21,7 +23,9 @@ class Browser {
       redirect: "manual",
       headers: {
         ...(method === "POST" ? { origin: TEST_PUBLIC_URL } : {}),
-        ...(this.cookie ? { cookie: this.cookie } : {}),
+        ...(this.cookie || this.others.size
+          ? { cookie: [this.cookie, ...[...this.others].map(([name, value]) => `${name}=${value}`)].filter(Boolean).join("; ") }
+          : {}),
         ...(json ? { "content-type": "application/json" } : {}),
         ...(body instanceof URLSearchParams ? { "content-type": "application/x-www-form-urlencoded" } : {}),
         ...extra,
@@ -31,7 +35,9 @@ class Browser {
     const setCookie = res.headers.get("set-cookie");
     if (setCookie) {
       const [pair] = setCookie.split(";");
-      this.cookie = pair.endsWith("=") ? "" : pair;
+      const name = pair.slice(0, pair.indexOf("="));
+      if (name === "__Host-session") this.cookie = pair.endsWith("=") ? "" : pair;
+      else this.others.set(name, pair.slice(name.length + 1));
     }
     const text = await res.text();
     return { status: res.status, headers: res.headers, text, json: () => JSON.parse(text) };
@@ -158,8 +164,34 @@ test("activating a site redirects there with the key in the fragment", async () 
   const key = location.split("=")[1];
   assert.deepEqual(store.authenticate(key), { type: "owner", actor: "marcel", appId: "shop" });
   const access = await marcel.get("/access");
-  assert.match(access.text, /<td>Shop<\/td><td>MacBook<\/td>/);
+  assert.match(access.text, /<td>Shop<\/td>\s*<td>MacBook <span class="status status-here">dieser Browser<\/span><\/td>/);
   assert.doesNotMatch(access.text, new RegExp(key));
+});
+
+test("the access page tells this browser's activations from the other devices'", async () => {
+  const phone = "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36";
+  const res = await marcel.post("/access/site-keys", new URLSearchParams({ app: "shop", label: "" }), { "user-agent": phone });
+  assert.match(res.headers.get("set-cookie") ?? "",
+    /^__Host-site-keys-here=\d+\.\d+; Path=\/; Secure; HttpOnly; SameSite=Strict; Max-Age=34560000$/);
+  const mine = (await marcel.get("/access")).text;
+  assert.match(mine, /nur in diesem Browser auf diesem Gerät/);
+  assert.match(mine, /<td>Chrome auf Android <span class="status status-here">dieser Browser<\/span><\/td>/);
+
+  const laptop = new Browser();
+  assert.equal((await laptop.signIn(passkey)).status, 200);
+  const theirs = (await laptop.get("/access")).text;
+  assert.match(theirs, /<td>Chrome auf Android<\/td>/);
+  assert.doesNotMatch(theirs, /dieser Browser/);
+  laptop.others.set("__Host-site-keys-here", "x.<b>.99999999999");
+  assert.doesNotMatch((await laptop.get("/access")).text, /dieser Browser/);
+});
+
+test("a device without a name is named after its browser and system", () => {
+  assert.equal(deviceName("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"), "Safari auf iPhone");
+  assert.equal(deviceName("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"), "Chrome auf Linux");
+  assert.equal(deviceName("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0"), "Edge auf Windows");
+  assert.equal(deviceName("Mozilla/5.0 (Macintosh; Intel Mac OS X 15.0; rv:143.0) Gecko/20100101 Firefox/143.0"), "Firefox auf Mac");
+  assert.equal(deviceName(undefined), "Browser");
 });
 
 test("an agent token is shown once and can be revoked", async () => {
