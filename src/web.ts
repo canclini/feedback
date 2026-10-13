@@ -5,6 +5,10 @@ import { Html, html } from "./html.ts";
 import { type App, type Entry, type Event, type Principal, type Status, type Store, StoreError } from "./store.ts";
 
 const SESSION_COOKIE = "__Host-session";
+// The ids of the site keys made in this browser, so the access page can tell
+// them apart from the other devices' keys. Ids only, never a key.
+const HERE_COOKIE = "__Host-site-keys-here";
+const HERE_MAX_AGE = 400 * 24 * 60 * 60;
 const MAX_BODY_BYTES = 64 * 1024;
 // The web UI is Marcel without an app restriction: he sees every app.
 const OWNER: Principal = { type: "owner", actor: "marcel", appId: null };
@@ -184,15 +188,17 @@ async function route(store: Store, auth: Auth, ctx: Context): Promise<boolean> {
     return true;
   }
   if (get && path === "/access") {
-    sendPage(res, store, 200, "Zugänge", accessPage(store, auth), true);
+    sendPage(res, store, 200, "Zugänge", accessPage(store, auth, keysHere(req)), true);
     return true;
   }
   if (post && path === "/access/site-keys") {
     const { app: appId, label } = await readBody(req);
     const app = typeof appId === "string" ? store.getApp(appId) : null;
     if (!app) throw new WebError(400, "Bitte eine Website wählen.");
-    const name = typeof label === "string" && label.trim() ? label.trim().slice(0, 60) : "Browser";
-    const { key } = store.createSiteKey(app.id, name);
+    const name = typeof label === "string" && label.trim() ? label.trim().slice(0, 60) : deviceName(req.headers["user-agent"]);
+    const { id, key } = store.createSiteKey(app.id, name);
+    const here = [...keysHere(req), id].slice(-50);
+    res.setHeader("set-cookie", `${HERE_COOKIE}=${here.join(".")}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${HERE_MAX_AGE}`);
     // The key travels in the fragment, which browsers never send to a server.
     redirect(res, `${app.origins[0]}/#feedback-key=${key}`);
     return true;
@@ -348,7 +354,7 @@ function entryActions(entry: Entry): Html {
   return html`<h2>Verwerfen</h2>${form("dismiss", "Grund", "Verwerfen", true)}`;
 }
 
-function accessPage(store: Store, auth: Auth): Html {
+function accessPage(store: Store, auth: Auth, here: number[]): Html {
   const apps = store.listApps();
   const names = new Map(apps.map((app) => [app.id, app.name]));
   const siteKeys = store.listSiteKeys().filter((key) => !key.revoked_at);
@@ -362,7 +368,7 @@ function accessPage(store: Store, auth: Auth): Html {
 
     <section>
       <h2>Websites</h2>
-      <p>Aktiviert das Feedback in diesem Browser auf einer Website. Der Schlüssel gilt nur für diese Website und diesen Browser.</p>
+      <p>Aktiviert das Feedback auf einer Website, und zwar nur in diesem Browser auf diesem Gerät. Für das Handy oder einen anderen Browser dort bei feedback.canclini.dev anmelden und die Website nochmals aktivieren.</p>
       <form method="post" action="/access/site-keys" class="row">
         <label>Website <select name="app" required>
           ${apps.map((app) => html`<option value="${app.id}">${app.name}</option>`)}
@@ -371,9 +377,12 @@ function accessPage(store: Store, auth: Auth): Html {
         <button>Aktivieren</button>
       </form>
       ${siteKeys.length > 0 && html`<table>
+        <caption>Aktiviert auf allen Geräten</caption>
         <thead><tr><th>Website</th><th>Gerät</th><th>Erstellt</th><th></th></tr></thead>
         <tbody>${siteKeys.map((key) => html`<tr>
-          <td>${names.get(key.app_id) ?? key.app_id}</td><td>${key.label}</td><td>${formatDate(key.created_at)}</td>
+          <td>${names.get(key.app_id) ?? key.app_id}</td>
+          <td>${key.label}${here.includes(key.id) && html` <span class="status status-here">dieser Browser</span>`}</td>
+          <td>${formatDate(key.created_at)}</td>
           <td>${revoke("site-keys", key.id)}</td></tr>`)}</tbody>
       </table>`}
     </section>
@@ -515,6 +524,22 @@ function redirect(res: ServerResponse, location: string): void {
 function setSessionCookie(res: ServerResponse, auth: Auth): void {
   const { token, maxAge } = auth.createSession();
   res.setHeader("set-cookie", `${SESSION_COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${maxAge}`);
+}
+
+function keysHere(req: IncomingMessage): number[] {
+  const value = parseCookies(req.headers.cookie)[HERE_COOKIE] ?? "";
+  return value.split(".").filter((part) => /^\d{1,9}$/.test(part)).map(Number);
+}
+
+// A name for the device when none is given, such as "Chrome auf Android".
+export function deviceName(userAgent: string | undefined): string {
+  const ua = userAgent ?? "";
+  const browser = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) ? "Chrome"
+    : /Safari\//.test(ua) ? "Safari" : null;
+  const system = /Android/.test(ua) ? "Android" : /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad"
+    : /Mac OS X/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : null;
+  if (browser && system) return `${browser} auf ${system}`;
+  return browser ?? system ?? "Browser";
 }
 
 function parseCookies(header: string | undefined): Record<string, string> {
