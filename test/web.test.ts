@@ -79,7 +79,7 @@ test("a wrong setup code is refused", async () => {
 test("the setup code registers the first passkey and signs in", async () => {
   const res = await marcel.register(passkey, "/auth/setup/options", { code: setupCode.toLowerCase() });
   assert.equal(res.status, 200);
-  assert.match(res.headers.get("set-cookie") ?? "", /^__Host-session=[\w-]{43}; Path=\/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000$/);
+  assert.match(res.headers.get("set-cookie") ?? "", /^__Host-session=[\w-]{43}; Path=\/; Secure; HttpOnly; SameSite=Lax; Max-Age=2592000$/);
   const page = await marcel.get("/");
   assert.match(page.text, /<h1>Übersicht<\/h1>/);
   assert.equal(auth.listCredentials().length, 1);
