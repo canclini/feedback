@@ -18,10 +18,13 @@ file loaded with `<script src="...">` in the `<head>`. The canonical copy is
 ```js
 // Feedback loader (github.com/canclini/feedback). Loads the feedback widget
 // only in a browser that holds a feedback key for this site, so ordinary
-// visitors never contact the feedback service.
+// visitors never contact the feedback service. That browser is the owner's,
+// so it also switches Umami off for this site: the owner's own visits, and the
+// key in the address the activation lands on, never reach the statistics.
 (function () {
   try {
     if (!/[#&]feedback-key=/.test(location.hash) && !localStorage.getItem("feedback-key")) return;
+    localStorage.setItem("umami.disabled", "1");
   } catch (e) {
     return;
   }
@@ -33,6 +36,12 @@ file loaded with `<script src="...">` in the `<head>`. The canonical copy is
 
 It must run before a client-side router rewrites the URL fragment, so the key handed over in
 `#feedback-key=` is still there.
+
+In the browser that holds a key it also sets `umami.disabled` in the site's `localStorage`,
+which Umami's tracker checks before every send, so the owner's visits are not counted. It runs
+before the tracker's first page view, so the address with `#feedback-key=` never reaches
+Umami either. The flag stays when the key is removed; delete it in the browser's storage to be
+counted again.
 
 ## 3. The deployed version
 
@@ -64,7 +73,8 @@ and removes it from the address bar. Alt+K or the button at the bottom right pic
 
 Visitors without a key load nothing from the service, so the site's privacy page needs no
 change. The widget sends the page URL, the element's selector, text and HTML, the viewport and
-the browser's user agent of the owner's own browser.
+the browser's user agent of the owner's own browser. The loader turns Umami off only in that
+browser, so it changes nothing for visitors either.
 
 ## Try it locally
 

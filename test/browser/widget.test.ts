@@ -1,6 +1,6 @@
 // The widget on a page with a strict CSP, in a real browser: key hand-over,
-// picking an element, the status on the page, answering a question, and no
-// request at all for a visitor without a key.
+// picking an element, the status on the page, answering a question, Umami off
+// in the owner's browser, and no request at all for a visitor without a key.
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { after, test } from "node:test";
@@ -35,6 +35,7 @@ test("a visitor without a key never loads the widget", { skip }, async () => {
     await browser.navigate(`${siteOrigin}/`);
     assert.equal(await browser.evaluate("document.querySelector('feedback-widget')"), null);
     assert.deepEqual(requests.filter((url) => url.startsWith(serviceOrigin)), []);
+    assert.equal(await browser.evaluate("localStorage.getItem('umami.disabled')"), null);
   } finally {
     await browser.close();
   }
@@ -48,6 +49,8 @@ test("the owner gives feedback on an element and follows it on the page", { skip
     await browser.waitFor(`${shadow(".toast")}?.textContent.startsWith("Feedback ist in diesem Browser aktiviert")`, "the activation notice");
     assert.equal(await browser.evaluate("location.hash"), "");
     assert.equal(await browser.evaluate("localStorage.getItem('feedback-key')"), key);
+    // The owner's browser keeps out of the site's Umami statistics.
+    assert.equal(await browser.evaluate("localStorage.getItem('umami.disabled')"), "1");
 
     // Alt+K, click the second card's heading, write, Enter.
     await browser.key("k", "KeyK", 75, 1);
