@@ -72,6 +72,13 @@ test("the owner gives feedback on an element and follows it on the page", { skip
 
     // The open entry is outlined on the element, with its status.
     await browser.waitFor(`${shadow(".marker .tag")}?.textContent === "#${entry.id} neu"`, "the marker");
+
+    // A second entry on the same element shares its outline and gets a tag of its own.
+    const second = store.createEntry(owner, { url: entry.url, selector: entry.selector!, comment: "Und fett" });
+    await browser.navigate(`${siteOrigin}/`);
+    await browser.waitFor(`${shadow(".marker")}?.parentNode.querySelectorAll(".tag").length === 2`, "two tags");
+    assert.equal(await browser.evaluate(`${shadow(".marker")}.parentNode.querySelectorAll(".marker").length`), 1);
+    store.addEvent(owner, second.id, { kind: "dismiss", body: "Nur ein Test" });
     store.addEvent(agent, entry.id, { kind: "claim" });
     store.addEvent(agent, entry.id, { kind: "question", body: "Wie gross soll er sein?" });
     await browser.navigate(`${siteOrigin}/`);
