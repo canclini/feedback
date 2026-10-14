@@ -88,6 +88,14 @@ test("the owner gives feedback on an element and follows it on the page", { skip
     const answer = store.getEntry(owner, entry.id).events.at(-1)!;
     assert.deepEqual([answer.kind, answer.actor, answer.body], ["answer", "marcel", "Wie die anderen Titel"]);
 
+    // An open entry takes an addition in the list.
+    await browser.evaluate(`${shadow(".panel textarea")}.focus()`);
+    await browser.type("Auch die Farbe");
+    await browser.evaluate(`[...${shadow(".panel")}.querySelectorAll("button")].find((b) => b.textContent === "Ergänzen").click()`);
+    await browser.waitFor(`${shadow(".panel")}?.textContent.includes("Ergänzung: Auch die Farbe")`, "the addition in the panel");
+    const addition = store.getEntry(owner, entry.id).events.at(-1)!;
+    assert.deepEqual([addition.kind, addition.actor, addition.body], ["note", "marcel", "Auch die Farbe"]);
+
     // Done entries leave the page; the list keeps them with the note.
     store.addEvent(agent, entry.id, { kind: "resolve", body: "Der Titel ist jetzt gleich gross wie die anderen." });
     await browser.navigate(`${siteOrigin}/`);

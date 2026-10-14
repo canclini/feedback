@@ -5,7 +5,7 @@ export const WORK_LOOP = `Feedback entries are comments Marcel left on an elemen
 
 1. Call list_open_feedback, pick one entry with status "new", and call claim_feedback on it before you start, so no other agent works on it. If the claim fails, pick another entry.
 2. Call get_feedback. It names the app's repo, deploy branch and local path. Open that repo, read its AGENTS.md (or CLAUDE.md) and follow it. Create the branch feedback/<id> from the deploy branch.
-3. Find the element: the selector and the HTML point to the markup, the commit tells which version Marcel saw. Make the change the comment asks for, no more.
+3. Find the element: the selector and the HTML point to the markup, the commit tells which version Marcel saw. Make the change the comment asks for, no more. Notes Marcel added to the entry (kind "note", actor "marcel") belong to his comment; check get_feedback again before you resolve, he may add one while you work.
 4. Run the repo's checks, commit following the repo's conventions, push the branch, and open a pull request if the repo works with them.
 5. Call resolve_feedback with a one-sentence note in German (de-CH, Swiss spelling: "ss" instead of "ß") saying what changed, and the branch or pull request URL as link. Do not merge: Marcel merges.
 

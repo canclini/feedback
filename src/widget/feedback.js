@@ -410,6 +410,13 @@
         answer,
         h("div", { class: "actions" }, h("button", { onclick: () => post(entry.id, "answer", answer.value) }, "Antworten")),
       );
+    } else if (entry.status === "new" || entry.status === "in_progress") {
+      const addition = h("textarea", { placeholder: "Was noch dazugehört" });
+      addition.addEventListener("keydown", (event) => event.stopPropagation());
+      node.append(
+        addition,
+        h("div", { class: "actions" }, h("button", { onclick: () => post(entry.id, "note", addition.value) }, "Ergänzen")),
+      );
     } else if (entry.status === "done" || entry.status === "dismissed") {
       node.append(h("div", { class: "actions" }, h("button", { class: "quiet", onclick: () => post(entry.id, "reopen", "") }, "Wieder öffnen")));
     }
@@ -417,11 +424,12 @@
   }
 
   function label(event) {
+    if (event.kind === "note" && event.actor === "marcel") return "Ergänzung";
     return { question: "Rückfrage", answer: "Antwort", resolve: "Erledigt", dismiss: "Verworfen", reopen: "Wieder geöffnet", note: "Notiz", claim: "Übernommen" }[event.kind] ?? event.kind;
   }
 
   async function post(id, kind, body) {
-    if (kind === "answer" && !body.trim()) return;
+    if ((kind === "answer" || kind === "note") && !body.trim()) return;
     try {
       await api("POST", `/v1/entries/${id}/events`, { kind, body });
     } catch (error) {
