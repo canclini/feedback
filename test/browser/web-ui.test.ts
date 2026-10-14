@@ -57,7 +57,7 @@ test("setup, sign-out, sign-in and answering a question", { skip, timeout: 60000
     const { cookies } = await browser.send<{ cookies: { name: string; httpOnly: boolean; secure: boolean; sameSite: string }[] }>("Network.getCookies");
     assert.deepEqual(
       cookies.map(({ name, httpOnly, secure, sameSite }) => ({ name, httpOnly, secure, sameSite })),
-      [{ name: "__Host-session", httpOnly: true, secure: true, sameSite: "Strict" }],
+      [{ name: "__Host-session", httpOnly: true, secure: true, sameSite: "Lax" }],
     );
     assert.deepEqual(browser.console.filter((line) => /Refused to|exception/.test(line)), []);
   } finally {

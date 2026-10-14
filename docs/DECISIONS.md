@@ -119,8 +119,10 @@ The open decisions of `docs/PLAN.md`:
   one-time code to its log on every start. It is kept in memory only. Once a passkey is
   registered, setup is closed; further passkeys are added from a signed-in session.
 - **Sessions in SQLite**, 30 days, as a `__Host-session` cookie (HttpOnly, Secure,
-  SameSite=Strict). Stored as a hash like the other secrets. Every state-changing request of the
-  UI must come with an `Origin` header equal to `PUBLIC_URL`.
+  SameSite=Lax). Stored as a hash like the other secrets. Every state-changing request of the
+  UI must come with an `Origin` header equal to `PUBLIC_URL`. Lax since 2026-10-14: under
+  Strict a link from elsewhere (Hex's board, a mail) opened the sign-in page every time. The
+  GET pages only read, and the Origin check guards every POST, so Lax gives nothing away.
 - **`Referrer-Policy: same-origin`, not `no-referrer`.** Under `no-referrer` Chrome sends
   `Origin: null` with form posts, and the origin check refuses them. `same-origin` still sends
   no referrer to the sites an entry links to.

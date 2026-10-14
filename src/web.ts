@@ -140,7 +140,7 @@ async function route(store: Store, auth: Auth, ctx: Context): Promise<boolean> {
   }
   if (post && path === "/logout") {
     auth.endSession(ctx.session);
-    res.setHeader("set-cookie", `${SESSION_COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`);
+    res.setHeader("set-cookie", `${SESSION_COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`);
     redirect(res, "/");
     return true;
   }
@@ -524,7 +524,9 @@ function redirect(res: ServerResponse, location: string): void {
 
 function setSessionCookie(res: ServerResponse, auth: Auth): void {
   const { token, maxAge } = auth.createSession();
-  res.setHeader("set-cookie", `${SESSION_COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${maxAge}`);
+  // Lax, not Strict: a link from elsewhere (Hex's board, a mail) opens the page signed in. A
+  // cross-site POST still goes without the cookie, and every POST must carry our Origin anyway.
+  res.setHeader("set-cookie", `${SESSION_COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`);
 }
 
 function keysHere(req: IncomingMessage): number[] {
