@@ -53,6 +53,24 @@ Global conventions (language, commits, PRs, reviews, co-authoring) come from
 - On the VM: `cd /srv/platform && docker compose --env-file /srv/data/secrets/umami.env logs
   feedback` (setup code while no passkey exists), `... exec feedback node src/cli.ts <command>`.
 
+## Auto-merge
+
+Feedback on these pages is worked in by Hex (`https://github.com/canclini/hex`, `docs/LINE.md`):
+a worker model fixes it on `feedback/<id>`, a second model reviews it, and Hex merges once CI is
+green; CI deploys. Hex reads this section from `main` only. What Hex may change is the web UI:
+its pages and texts (`src/web.ts`, `src/html.ts`, `src/ui/`). Everything that holds a secret,
+decides who gets in, stores data or runs on Marcel's sites is protected: those changes go
+through a session and Marcel. Visible text is German (de-CH, «ss», never «ß»), no em dashes.
+
+- setup: `npm ci --silent`
+- test: `npm run check`
+- serve: `PORT={port} DATABASE_PATH=preview.db node src/main.ts`
+- sizes: 1280x650, 390x760
+- smoke: `/`
+- protected: `src/auth.ts`, `src/api.ts`, `src/mcp.ts`, `src/store.ts`, `src/db.ts`, `src/tokens.ts`, `src/server.ts`, `src/config.ts`, `src/main.ts`, `src/cli.ts`, `src/apps.ts`, `src/snapshot.ts`, `src/loop.ts`, `src/widget/*`, `src/ui/passkey.js`, `src/ui/loader.js`, `apps.json`, `bin/*`, `test/*`, `docs/*`, `dev/*`
+- max_lines: 150
+- merge: auto
+
 ## Layout
 
 - `src/`: the service. `store.ts` holds all rules (status machine, scoping, validation) and is
