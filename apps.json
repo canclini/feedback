@@ -31,6 +31,22 @@
       "repo": "canclini/Zahlenfuchs",
       "branch": "main",
       "local_path": "~/Projects/zahlenfuchs/zahlenfuchs.app"
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback",
+      "origins": ["https://feedback.canclini.dev"],
+      "repo": "canclini/feedback",
+      "branch": "main",
+      "local_path": "~/Projects/canclini.dev/feedback"
+    },
+    {
+      "id": "hex",
+      "name": "Hex Leitstand",
+      "origins": ["https://hex.canclini.dev"],
+      "repo": "canclini/hex",
+      "branch": "main",
+      "local_path": "~/Projects/canclini.dev/hex"
     }
   ]
 }

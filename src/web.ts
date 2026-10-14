@@ -35,6 +35,10 @@ const KIND_LABELS: Record<string, string> = {
 const STATIC: Record<string, { type: string; body: Buffer }> = {
   "/ui/style.css": { type: "text/css; charset=utf-8", body: readFileSync(new URL("./ui/style.css", import.meta.url)) },
   "/ui/icon.svg": { type: "image/svg+xml", body: readFileSync(new URL("./ui/icon.svg", import.meta.url)) },
+  "/ui/loader.js": {
+    type: "text/javascript; charset=utf-8",
+    body: readFileSync(new URL("./ui/loader.js", import.meta.url)),
+  },
   "/ui/passkey.js": {
     type: "text/javascript; charset=utf-8",
     body: readFileSync(new URL("./ui/passkey.js", import.meta.url)),
@@ -437,6 +441,10 @@ function tokenCreatedPage(auth: Auth, name: string, token: string): Html {
 
 // Building blocks
 
+// The commit this image was built from, as on every site (docs/EMBED.md), so Hex can tell when a
+// merge is live and an entry on these pages names the version Marcel saw.
+const VERSION = process.env.GIT_COMMIT ?? "dev";
+
 function layout(title: string, content: Html, signedIn: boolean): Html {
   return html`<!doctype html>
 <html lang="de-CH">
@@ -446,6 +454,8 @@ function layout(title: string, content: Html, signedIn: boolean): Html {
 <title>${title} · Feedback</title>
 <link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/ui/style.css">
+<meta name="app-version" content="${VERSION}">
+<script src="/ui/loader.js"></script>
 <script type="module" src="/ui/passkey.js"></script>
 </head>
 <body>

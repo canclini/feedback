@@ -64,6 +64,15 @@ class Browser {
 const passkey = new SoftAuthenticator(TEST_PUBLIC_URL);
 const marcel = new Browser();
 
+test("every page carries its version and the feedback loader, like a site", async () => {
+  const page = await new Browser().get("/");
+  assert.match(page.text, /<meta name="app-version" content="[^"]+">/);
+  assert.match(page.text, /<script src="\/ui\/loader.js"><\/script>/);
+  const loader = await new Browser().get("/ui/loader.js");
+  assert.equal(loader.status, 200);
+  assert.match(loader.text, /script\.src = "\/v1\/feedback\.js"/);
+});
+
 test("before setup the start page asks for the setup code", async () => {
   const page = await new Browser().get("/");
   assert.match(page.text, /<h1>Einrichten<\/h1>/);
