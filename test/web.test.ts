@@ -236,6 +236,21 @@ test("a question waits on the overview and is answered from the entry page", asy
   assert.equal(claim.status, 403);
 });
 
+test("an open entry takes an addition from the entry page and stays where it is", async () => {
+  const agent = { type: "agent", actor: "agent:claude", scope: "write" } as const;
+  const { id } = store.createEntry(owner, { url: "https://www.shop.test/", comment: "Titel kürzen" });
+  for (const status of ["new", "in_progress"]) {
+    if (status === "in_progress") store.addEvent(agent, id, { kind: "claim" });
+    const page = await marcel.get(`/entries/${id}`);
+    assert.match(page.text, /name="kind" value="note"/);
+    const added = await marcel.form(`/entries/${id}/events`, { kind: "note", body: `Auch den Untertitel (${status})` });
+    assert.equal(added.status, 303);
+    const { entry, events } = store.getEntry(owner, id);
+    assert.equal(entry.status, status);
+    assert.deepEqual([events.at(-1)!.kind, events.at(-1)!.actor], ["note", "marcel"]);
+  }
+});
+
 test("the app page lists open entries, or all of them", async () => {
   const { id } = store.createEntry(owner, { url: "https://www.shop.test/", comment: "Logo zu klein" });
   store.addEvent(owner, id, { kind: "dismiss", body: "Doch gut so." });

@@ -351,7 +351,8 @@ function entryActions(entry: Entry): Html {
   if (entry.status === "done" || entry.status === "dismissed") {
     return html`<h2>Wieder öffnen</h2>${form("reopen", "Was noch nicht stimmt (optional)", "Wieder öffnen", false)}`;
   }
-  return html`<h2>Verwerfen</h2>${form("dismiss", "Grund", "Verwerfen", true)}`;
+  return html`<h2>Ergänzen</h2>${form("note", "Was noch dazugehört", "Ergänzen", true)}
+    <h2>Verwerfen</h2>${form("dismiss", "Grund", "Verwerfen", true)}`;
 }
 
 function accessPage(store: Store, auth: Auth, here: number[]): Html {
