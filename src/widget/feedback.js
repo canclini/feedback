@@ -45,10 +45,11 @@
     .marker { outline: 2px solid #2f5d46; }
     .marker.in_progress { background: rgba(250,247,241,.55); outline-color: #7a7266; }
     .marker.question { outline-color: #b07a10; }
-    .tag { position: absolute; top: -24px; left: -2px; padding: 1px 6px; font-size: 12px; white-space: nowrap; pointer-events: auto; cursor: pointer;
+    .tags { position: absolute; top: -24px; left: -2px; display: flex; gap: 2px; }
+    .tag { padding: 1px 6px; font-size: 12px; white-space: nowrap; pointer-events: auto; cursor: pointer;
       border: 0; background: #2f5d46; color: #faf7f1; }
-    .marker.in_progress .tag { background: #7a7266; }
-    .marker.question .tag { background: #b07a10; }
+    .tag.in_progress { background: #7a7266; }
+    .tag.question { background: #b07a10; }
     .card { position: fixed; z-index: 2147483002; width: 360px; max-width: calc(100vw - 16px); padding: 12px; background: #fffdf8; color: #26221c;
       border: 1px solid #ddd5c6; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
     .what { margin-bottom: 8px; font-size: 12px; color: #52493a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -311,22 +312,32 @@
 
   // Status on the page
 
+  // One outline per element, with a tag for each open entry on it: several
+  // entries on one element would otherwise draw their tags on top of each other.
   function renderMarkers() {
+    const byElement = new Map();
+    for (const entry of entries) {
+      const element = OPEN.includes(entry.status) && find(entry.selector);
+      if (!element) continue;
+      if (!byElement.has(element)) byElement.set(element, []);
+      byElement.get(element).push(entry);
+    }
     markers.replaceChildren(
-      ...entries
-        .filter((entry) => OPEN.includes(entry.status))
-        .map((entry) => {
-          const element = find(entry.selector);
-          if (!element) return null;
-          const marker = h(
+      ...[...byElement].map(([element, open]) => {
+        const marker = h(
+          "div",
+          { class: `box marker ${open.find((entry) => entry.status === "question")?.status ?? open[0].status}` },
+          h(
             "div",
-            { class: `box marker ${entry.status}` },
-            h("button", { class: "tag", onclick: () => togglePanel(entry.id) }, `#${entry.id} ${STATUS[entry.status]}`),
-          );
-          marker.target = element;
-          return marker;
-        })
-        .filter(Boolean),
+            { class: "tags" },
+            ...open.map((entry) =>
+              h("button", { class: `tag ${entry.status}`, onclick: () => togglePanel(entry.id) }, `#${entry.id} ${STATUS[entry.status]}`),
+            ),
+          ),
+        );
+        marker.target = element;
+        return marker;
+      }),
     );
     reposition();
   }
