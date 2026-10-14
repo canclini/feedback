@@ -67,7 +67,7 @@ through a session and Marcel. Visible text is German (de-CH, «ss», never «ß�
 - serve: `PORT={port} DATABASE_PATH=preview.db node src/main.ts`
 - sizes: 1280x650, 390x760
 - smoke: `/`
-- protected: `src/auth.ts`, `src/api.ts`, `src/mcp.ts`, `src/store.ts`, `src/db.ts`, `src/tokens.ts`, `src/server.ts`, `src/config.ts`, `src/main.ts`, `src/cli.ts`, `src/apps.ts`, `src/snapshot.ts`, `src/loop.ts`, `src/widget/*`, `src/ui/passkey.js`, `src/ui/loader.js`, `apps.json`, `bin/*`, `test/*`, `docs/*`, `dev/*`
+- protected: `src/auth.ts`, `src/api.ts`, `src/mcp.ts`, `src/store.ts`, `src/db.ts`, `src/tokens.ts`, `src/server.ts`, `src/config.ts`, `src/main.ts`, `src/cli.ts`, `src/apps.ts`, `src/snapshot.ts`, `src/loop.ts`, `src/widget/*`, `src/ui/passkey.js`, `src/ui/loader.js`, `apps.json`, `bin/*`, `test/*`, `docs/*`, `dev/*`, `README.md`, `SECURITY.md`, `LICENSE`
 - max_lines: 150
 - merge: auto
 
