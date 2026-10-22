@@ -5,6 +5,12 @@ on:
     branches:
       - "**"
   pull_request:
+  # Rebuilds main on the current node:24-alpine, so a security release of the
+  # base image reaches the VM without waiting for a code change. GitHub stops
+  # the schedule after 60 days without activity in the repo.
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -47,10 +53,11 @@ jobs:
       - run: node bin/check-commits.ts "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   # Every green commit on main becomes ghcr.io/canclini/feedback:main (and
-  # :<sha>). The package is public, so the VM pulls it without credentials.
+  # :<sha>), and so does every scheduled or manual run on main. The package is
+  # public, so the VM pulls it without credentials.
   publish:
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.test.result == 'success'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.test.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -63,7 +70,7 @@ jobs:
       - name: Build and push
         run: |
           image=ghcr.io/canclini/feedback
-          docker build --build-arg GIT_COMMIT=${{ github.sha }} -t "$image:main" -t "$image:${{ github.sha }}" .
+          docker build --pull --build-arg GIT_COMMIT=${{ github.sha }} -t "$image:main" -t "$image:${{ github.sha }}" .
           docker push "$image:${{ github.sha }}"
           docker push "$image:main"
 
