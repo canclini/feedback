@@ -452,6 +452,7 @@ function layout(title: string, content: Html, signedIn: boolean): Html {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title} · Feedback</title>
+<meta name="description" content="Feedback: auf ein Element einer Website zeigen, kommentieren, und ein Agent behebt es. Der Status kommt auf die Seite zurück.">
 <link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/ui/style.css">
 <meta name="app-version" content="${VERSION}">
